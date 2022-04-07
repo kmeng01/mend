@@ -19,6 +19,26 @@ from utils import _logits, safe_backward, RunningStatAverager, EarlyStopper, for
 LOG = logging.getLogger(__name__)
 
 
+import transformers
+import getpass
+
+
+def scr():
+    if os.path.exists("/scr-ssd"):
+        scr_dir = "/scr-ssd/" + getpass.getuser()
+    else:
+        scr_dir = "/scr/" + getpass.getuser()
+
+    if not os.path.exists(scr_dir):
+        os.makedirs(scr_dir)
+
+    return scr_dir
+
+def get_tokenizer(config):
+    tok_name = config.model.tokenizer_name if config.model.tokenizer_name is not None else config.model.name
+    return getattr(transformers, config.model.tokenizer_class).from_pretrained(tok_name, cache_dir=scr())
+
+
 class BaseTrainer:
     def __init__(self, model, config, train_set: Dataset, val_set: Dataset):
         self.model = model
@@ -211,6 +231,19 @@ class EditTrainer(BaseTrainer):
 
         with torch.no_grad():
             base_logits = self.model(**batch["loc"])
+
+        tokenizer = get_tokenizer(self.config)
+        for k, v in batch.items():
+            for want in ["input_ids", "labels"]:
+                if want in v:
+                    print(f"KEY {k} WANT {want}")
+                    to_decode = v[want]
+                    to_decode[to_decode == -100] = tokenizer.pad_token_id
+                    print("VALUE", [
+                        tokenizer.decode(z.detach().cpu().numpy().tolist()) for z in to_decode
+                    ])
+
+        print("\n\n")
 
         # Do the edit
         start = time.time()
