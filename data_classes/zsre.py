@@ -99,6 +99,65 @@ class Seq2SeqAugmentedKILT(Dataset):
 
         return output
 
+    def __getitem__(self, item, seed=None):
+        new_label = random.choice(self.data[item]["alternatives"])
+        rephrase = random.choice(self.data[item]["filtered_rephrases"])
+        output = {
+            "src": self.data[item]["input"],
+            "pred": self.data[item]["prediction"],
+            "rephrase": rephrase,
+            "alt": new_label,
+            "answers": [x["answer"] for x in self.data[item]["output"]],
+            "cond": "{} >> {} || {}".format(
+                self.data[item]["prediction"],
+                new_label,
+                self.data[item]["input"],
+            ),
+        }
+
+        return output
+
+    def __getitem_alt__(self, item, seed=None):
+        self.tot_cnt += 1
+        new_label = random.choice(self.data[item]["alternatives"])
+
+        src = self.data[item]["input"]
+        rephrase = random.choice(self.data[item]["filtered_rephrases"])
+
+        if "provenance" not in self.data[item]["output"][0]:
+            self.bad_cnt += 1
+            print(f"{self.bad_cnt}/{self.tot_cnt}")
+            return {}
+
+        subject = self.data[item]["output"][0]["provenance"][0]["title"]
+
+        if not (subject in rephrase and subject in src):
+            print("bad")
+            self.bad_cnt += 1
+            print(f"{self.bad_cnt}/{self.tot_cnt}")
+            return {}
+
+        nq_idx = np.random.randint(0, len(self.nq.questions))
+        question, answer = self.nq[nq_idx]
+
+        output = {
+            "subject": subject,
+            "src": src,
+            "pred": self.data[item]["prediction"],
+            "rephrase": rephrase,
+            "alt": new_label,
+            "answers": [x["answer"] for x in self.data[item]["output"]],
+            "loc": question,
+            "loc_ans": answer,
+            "cond": "{} >> {} || {}".format(
+                self.data[item]["prediction"],
+                new_label,
+                self.data[item]["input"],
+            ),
+        }
+
+        return output
+
     def collate_fn(self, batch):
         src = [b["src"] for b in batch]
         ne = self.config.data.n_edits
