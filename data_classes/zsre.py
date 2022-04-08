@@ -5,6 +5,7 @@ from utils import EditBatchSampler, dict_to
 import torch
 from transformers import BartTokenizerFast, BartTokenizer
 import logging
+import numpy as np
 
 LOG = logging.getLogger(__name__)
 
@@ -48,6 +49,9 @@ class Seq2SeqAugmentedKILT(Dataset):
         else:
             self.use_nq = False
 
+        self.bad_cnt = 0
+        self.tot_cnt = 0
+
     def is_bart(self):
         return isinstance(self.tok, BartTokenizer) or isinstance(self.tok, BartTokenizerFast)
 
@@ -55,14 +59,37 @@ class Seq2SeqAugmentedKILT(Dataset):
         return len(self.data)
 
     def __getitem__(self, item, seed=None):
+        self.tot_cnt += 1
         new_label = random.choice(self.data[item]["alternatives"])
+
+        src = self.data[item]["input"]
         rephrase = random.choice(self.data[item]["filtered_rephrases"])
+
+        if "provenance" not in self.data[item]["output"][0]:
+            self.bad_cnt += 1
+            print(f"{self.bad_cnt}/{self.tot_cnt}")
+            return {}
+
+        subject = self.data[item]["output"][0]["provenance"][0]["title"]
+
+        if not (subject in rephrase and subject in src):
+            print("bad")
+            self.bad_cnt += 1
+            print(f"{self.bad_cnt}/{self.tot_cnt}")
+            return {}
+
+        nq_idx = np.random.randint(0, len(self.nq.questions))
+        question, answer = self.nq[nq_idx]
+
         output = {
-            "src": self.data[item]["input"],
+            "subject": subject,
+            "src": src,
             "pred": self.data[item]["prediction"],
             "rephrase": rephrase,
             "alt": new_label,
             "answers": [x["answer"] for x in self.data[item]["output"]],
+            "loc": question,
+            "loc_ans": answer,
             "cond": "{} >> {} || {}".format(
                 self.data[item]["prediction"],
                 new_label,

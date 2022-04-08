@@ -8,7 +8,7 @@ from omegaconf import OmegaConf
 import numpy as np
 import torch
 import utils
-
+import json
 
 from trainer import EditTrainer
 import models
@@ -59,6 +59,12 @@ def run(config):
                                          config)
         val_set = Seq2SeqAugmentedKILT(tokenizer, f"{base_dir}/data/zsre/structured_zeroshot-dev-new_annotated_final.jsonl",
                                        config)
+        
+        out = [el for el in val_set if len(el) > 0]
+        with open("val_set.json", "w") as f:
+            json.dump(out, f)
+        print(val_set.bad_cnt, val_set.tot_cnt)
+
     else:
         raise ValueError(f"Unrecognized task {config.task}")
 
