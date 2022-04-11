@@ -48,13 +48,13 @@ class CFGenDataset(Dataset):
 
         edit_idx = 0
         while True:
-            record = self.edit_samples[edit_idx]
+            record = self.edit_samples[edit_idx % len(self.edit_samples)]
             request = record["requested_rewrite"]
 
             target_new_tok = self.tok(" " + request["target_new"]["str"])["input_ids"]
             target_old_tok = self.tok(" " + request["target_true"]["str"])["input_ids"]
 
-            edit_batch = [request["prompt"].format(request["subject"]) + self.tok.decode(target_new_tok[:-1])]
+            edit_batch = [request["prompt"].format(request["entity"]) + self.tok.decode(target_new_tok[:-1])]
             loc_batch = [record["neighborhood_prompts"][0] + self.tok.decode(target_old_tok[:-1])]
             para_batch = [record["paraphrase_prompts"][0] + self.tok.decode(target_new_tok[:-1])]
 
@@ -78,7 +78,7 @@ class CFGenDataset(Dataset):
                     for i, el in enumerate(target_tok):
                         ret[pad_factor - len(target_tok) + i] = el
 
-                    ret[ret == -100] = self.tok.eos_token_id
+                    # ret[ret == -100] = self.tok.eos_token_id
                     # print(self.tok.decode(ret))
                     # print(list(zip([self.tok.decode(z) for z in batch_ids], [self.tok.decode(z) for z in ret])))
                     ans.append(ret)

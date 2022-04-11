@@ -249,13 +249,14 @@ class EditTrainer(BaseTrainer):
 
         # tokenizer = get_tokenizer(self.config)
         # for k, v in batch.items():
+        #     print(v)
         #     for want in ["input_ids", "labels"]:
         #         if want in v:
         #             print(f"KEY {k} WANT {want}")
         #             to_decode = v[want]
-        #             to_decode[to_decode == -100] = tokenizer.pad_token_id
+        #             to_decode[to_decode == -100] = tokenizer.eos_token_id
         #             print("VALUE", [
-        #                 tokenizer.decode(z.detach().cpu().numpy().tolist()) for z in to_decode
+        #                 tokenizer.decode(z.detach().cpu().numpy().tolist()).replace("<|endoftext|>", "") for z in to_decode
         #             ], sum(to_decode.shape))
 
         # print("\n\n")

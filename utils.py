@@ -20,7 +20,7 @@ def _inner_params(named_parameters, inner_names):
 
 
 def shift_targets(config):
-    return "t5" not in config.model.name.lower()
+    return "t5" not in config.model.name.lower() and "gpt2" not in config.model.name.lower()
 
 
 def scr():
