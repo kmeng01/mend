@@ -43,10 +43,11 @@ def run(config):
 
     if config.task == "gen" or config.task == "wiki":
         add_padding(tokenizer, model)
-        from data_classes.wiki import GenDataset
+        from data_classes.cf import CFGenDataset
 
-        train_set = GenDataset("train", tokenizer, config, config.data.path, pct=10)
-        val_set = GenDataset("validation", tokenizer, config, config.data.path, pct=10)
+        train_set = CFGenDataset("train", tokenizer, config, config.data.path, pct=10)
+        val_set = CFGenDataset("validation", tokenizer, config, config.data.path, pct=10)
+        print(f"train set size: {len(train_set)} | val set size: {len(val_set)}")
     elif config.task == "fc" or config.task == "fever":
         from data_classes.fever import BinaryAugmentedKILT
 
@@ -64,7 +65,6 @@ def run(config):
         with open("val_set.json", "w") as f:
             json.dump(out, f)
         print(val_set.bad_cnt, val_set.tot_cnt)
-
     else:
         raise ValueError(f"Unrecognized task {config.task}")
 

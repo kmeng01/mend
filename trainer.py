@@ -96,8 +96,8 @@ class BaseTrainer:
                 wandb_name += f" - {self.config.ref}"
             LOG.info(f"Writing wandb run \"{wandb_name}\" to {wandb_dir}")
             wandb.init(
-                project="efk",
-                entity="patchable-lm",
+                project="new-mend",
+                entity="kmeng01",
                 config=utils.flatten_dict(self.config),
                 name=wandb_name,
                 dir=wandb_dir,
@@ -211,7 +211,22 @@ class EditTrainer(BaseTrainer):
     def __init__(self, model, config, train_set: Dataset, val_set: Dataset):
         super().__init__(model, config, train_set, val_set)
 
+        tokenizer = get_tokenizer(config)
         self.edit_gen = self.train_set.edit_generator(batch_size=config.batch_size)
+        # for el in self.edit_gen:
+        #     print(el)
+        #     for k, v in el.items():
+        #         if "input_ids" in v:
+        #             print(f"|| {k} ||", tokenizer.decode(v["input_ids"][0]))
+
+        #             if "labels" in v:
+        #                 to_decode =  v["labels"][0].detach()
+        #                 to_decode[to_decode == -100] = tokenizer.eos_token_id
+
+        #                 print(f"|| {k} LABELS ||", tokenizer.decode(to_decode).replace("<|endoftext|>" , ""))
+        #         else:
+        #             print(f"|| {k} ||", tokenizer.decode(v[0]))
+        #     break
         if hasattr(model, "edit_lrs") and not self.config.eval_only:
             self.lr_opt = self.OptimizerClass([model.edit_lrs], config.lr_lr)
             if self.archive is not None:
@@ -232,18 +247,18 @@ class EditTrainer(BaseTrainer):
         with torch.no_grad():
             base_logits = self.model(**batch["loc"])
 
-        tokenizer = get_tokenizer(self.config)
-        for k, v in batch.items():
-            for want in ["input_ids", "labels"]:
-                if want in v:
-                    print(f"KEY {k} WANT {want}")
-                    to_decode = v[want]
-                    to_decode[to_decode == -100] = tokenizer.pad_token_id
-                    print("VALUE", [
-                        tokenizer.decode(z.detach().cpu().numpy().tolist()) for z in to_decode
-                    ])
+        # tokenizer = get_tokenizer(self.config)
+        # for k, v in batch.items():
+        #     for want in ["input_ids", "labels"]:
+        #         if want in v:
+        #             print(f"KEY {k} WANT {want}")
+        #             to_decode = v[want]
+        #             to_decode[to_decode == -100] = tokenizer.pad_token_id
+        #             print("VALUE", [
+        #                 tokenizer.decode(z.detach().cpu().numpy().tolist()) for z in to_decode
+        #             ], sum(to_decode.shape))
 
-        print("\n\n")
+        # print("\n\n")
 
         # Do the edit
         start = time.time()
