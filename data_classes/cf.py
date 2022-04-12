@@ -56,7 +56,7 @@ class CFGenDataset(Dataset):
 
             edit_batch = [request["prompt"].format(request["entity"]) + self.tok.decode(target_new_tok[:-1])]
             loc_batch = [record["neighborhood_prompts"][0] + self.tok.decode(target_old_tok[:-1])]
-            para_batch = [record["paraphrase_prompts"][0] + self.tok.decode(target_new_tok[:-1])]
+            para_batch = edit_batch + [record["paraphrase_prompts"][0] + self.tok.decode(target_new_tok[:-1])]
 
             edit_toks = self.tok(edit_batch, padding=True, return_tensors="pt")
             loc_toks = self.tok(loc_batch, padding=True, return_tensors="pt")
