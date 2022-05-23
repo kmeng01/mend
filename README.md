@@ -1,3 +1,8 @@
+kevin's notes:
+```
+sudo /home/mengk/miniconda3/envs/mend/bin/python3 -m run +alg=mend +experiment=qa +model=gpt2xl
+```
+
 # MEND: Model Editing Networks using Gradient Decomposition
 
 If you run into any issues with the code, you can open an issue and/or email me at `eric.mitchell@cs.stanford.edu`

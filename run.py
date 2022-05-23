@@ -44,9 +44,16 @@ def run(config):
     if config.task == "gen" or config.task == "wiki":
         add_padding(tokenizer, model)
         from data_classes.cf import CFGenDataset
+        from data_classes.cf_zsre import CFzsREDataset
 
-        train_set = CFGenDataset("train", tokenizer, config, config.data.path, pct=10)
-        val_set = CFGenDataset("validation", tokenizer, config, config.data.path, pct=10)
+        # train_set = CFGenDataset("train", tokenizer, config, config.data.path, pct=10)
+        # val_set = CFGenDataset("validation", tokenizer, config, config.data.path, pct=10)
+
+        train_set = CFzsREDataset("train", tokenizer, config, config.data.path, pct=10)
+        val_set = CFzsREDataset("validation", tokenizer, config, config.data.path, pct=10)
+        print(train_set[0])
+        print(next(train_set.edit_generator(1)))
+        
         print(f"train set size: {len(train_set)} | val set size: {len(val_set)}")
     elif config.task == "fc" or config.task == "fever":
         from data_classes.fever import BinaryAugmentedKILT
@@ -61,10 +68,16 @@ def run(config):
         val_set = Seq2SeqAugmentedKILT(tokenizer, f"{base_dir}/data/zsre/structured_zeroshot-dev-new_annotated_final.jsonl",
                                        config)
         
+        out = [el for el in train_set if len(el) > 0]
+        with open("train_set.json", "w") as f:
+            json.dump(out, f)
+        print(train_set.bad_cnt, train_set.tot_cnt)
+
         out = [el for el in val_set if len(el) > 0]
         with open("val_set.json", "w") as f:
             json.dump(out, f)
         print(val_set.bad_cnt, val_set.tot_cnt)
+        raise
     else:
         raise ValueError(f"Unrecognized task {config.task}")
 
